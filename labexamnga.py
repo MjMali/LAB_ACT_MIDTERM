@@ -1,5 +1,44 @@
 import matplotlib.pyplot as plt
 
+# ==================== HELPER FUNCTIONS ========================
+def get_menu_choice (prompt, options, default_label=None, default_value=None):
+    """
+    Display menu and return selected value.
+
+    Args:
+    prompt (str): Title for the menu
+    options (list[tuple]): List of (label, value) pairs.
+    default_label (str): label shown for default option (optional).
+    default_value: value returned if user presses the Enter key. 
+
+    Returns:
+        The selected option's value.
+    """
+
+    print(f"\n{prompt}")
+    for i, (label, _) in enumerate(options, start=1):
+        print(f"{i}. {label}")
+    
+    while True:
+        choice = input(f"Choose an option (1-{len(options)}): ")
+
+        if choice == '':
+            if default_value is not None:
+                print(f"Setting to default ({default_label})...")
+                return default_value
+            else:
+                print("Please enter a choice.")
+                continue
+        
+        try: 
+            choice = int(choice)
+            if 1 <= choice <= len(options):
+                return options[choice - 1][1]
+            else:
+                print(f"Please enter a number between 1 and {len(options)}.")
+        except ValueError:
+            print("Error! Please enter a valid number.")
+
 # ==================== DATA INPUT FUNCTIONS ====================
 
 def get_data_points():
@@ -10,6 +49,9 @@ def get_data_points():
     while True:
         try:
             num_points = int(input("How many data points? "))
+            if num_points <= 0:
+                print("Error! You must have at least one data point.")
+                continue
             break
         except ValueError:
             print("Error! Please enter a valid number.")
@@ -43,7 +85,7 @@ def get_bar_data():
             print("Error! Please enter a valid number.")
     
     if num_bars > 6:
-        print("Maximum 6 bars allowed. Setting to 6.")
+        print("Maximum 6 bars allowed. Setting to 6...")
         num_bars = 6
     
     for i in range(num_bars):
@@ -65,76 +107,43 @@ def get_bar_data():
 # ==================== LINE PLOT FUNCTIONS ====================
 
 def get_line_marker():
-    """Get marker type for line plot"""
-    print("\nMarker Options:")
-    print("1. Circle")
-    print("2. Square")
-    print("3. Star")
-    
-    choice = input("Choose marker (1-3): ")
-    
-    if choice == '1':
-        marker = 'o'
-    elif choice == '2':
-        marker = 's'
-    elif choice == '3':
-        marker = '*'
-    else:
-        marker = 'o'
-    
-    return marker
+    options = [
+        ("Circle", "o"), 
+        ("Square", "s"), 
+        ("Star", "*")
+        ]
+    return get_menu_choice("Marker Options: ", options, "Circle", "o")
 
+def get_marker_color():
+    options = [
+        ("Red", "red"), 
+        ("Blue", "blue"), 
+        ("Yellow", "yellow")
+        ]
+    return get_menu_choice("Marker Color Options:", options, "Red", "red")
 
 def get_line_color():
-    """Get color for line plot"""
-    print("\nColor Options:")
-    print("1. Red")
-    print("2. Blue")
-    print("3. Yellow")
-    
-    choice = input("Choose color (1-3): ")
-    
-    if choice == '1':
-        color = 'red'
-    elif choice == '2':
-        color = 'blue'
-    elif choice == '3':
-        color = 'yellow'
-    else:
-        color = 'red'
-    
-    return color
-
+    options = [
+        ("Red", "red"), 
+        ("Blue", "blue"), 
+        ("Yellow", "yellow")
+        ]
+    return get_menu_choice("Line Color Options:", options, "Red", "red")
 
 def get_line_style():
-    """Get line style for line plot"""
-    print("\nLine Style Options:")
-    print("1. Solid")
-    print("2. Dotted")
-    print("3. Dashed")
-    print("4. Dashed-Dotted")
-    
-    choice = input("Choose line style (1-4): ")
-    
-    if choice == '1':
-        style = '-'
-    elif choice == '2':
-        style = ':'
-    elif choice == '3':
-        style = '--'
-    elif choice == '4':
-        style = '-.'
-    else:
-        style = '-'
-    
-    return style
+    options = [
+        ("Solid", "-"),
+        ("Dotted", ":"),
+        ("Dashed", "--"),
+        ("Dash-Dotted", "-."),
+    ]
+    return get_menu_choice("Line Style Options:", options, "Solid", "-")
 
-
-def create_line_plot(labels, values, marker, color, linestyle):
+def create_line_plot(labels, values, marker, color, markercolor, linestyle):
     """Create and display line plot"""
     plt.figure(figsize=(10, 6))
     plt.plot(labels, values, marker=marker, color=color, linestyle=linestyle, 
-             linewidth=2, markersize=15, markerfacecolor=color, 
+             linewidth=2, markersize=15, markerfacecolor=markercolor, 
              markeredgecolor='black', markeredgewidth=2, alpha=0.7)
     plt.xlabel('Labels')
     plt.ylabel('Values')
@@ -149,61 +158,56 @@ def create_line_plot(labels, values, marker, color, linestyle):
 def get_bar_width():
     """Get bar width"""
     while True:
+        width = input("Enter bar width (0.1 to 1.0, recommended 0.5): ")
+
+        if width == '':
+            print("Setting to default (0.5) bar width...")
+            return 0.5
+
         try:
-            width = float(input("Enter bar width (0.1 to 1.0, recommended 0.5): "))
-            break
+            width = float(width)
         except ValueError:
             print("Error! Please enter a valid number.")
-    
-    if width < 0.1:
-        width = 0.1
-    elif width > 1.0:
-        width = 1.0
-    
-    return width
+            continue
+
+        # Clamp to range
+        if width < 0.1:
+            print("Minimum value is 0.1! Setting to 0.1...")
+            width = 0.1
+        elif width > 1.0:
+            print("Max value is 1.0! Setting to 1.0...")
+            width = 1.0
+
+        return width
 
 
 def get_bar_colors(num_bars):
     """Get colors for each bar"""
-    print("\nColor Options:")
-    print("1. Red")
-    print("2. Blue")
-    print("3. Yellow")
-    print("4. Green")
-    print("5. Purple")
-    print("6. Orange")
-    print("7. Pink")
+    color_options = [
+        ("Red", "red"),
+        ("Blue", "blue"),
+        ("Yellow", "yellow"),
+        ("Green", "green"),
+        ("Purple", "purple"),
+        ("Orange", "orange"),
+        ("Pink", "pink")
+    ]
     
     colors = []
     for i in range(num_bars):
-        choice = input(f"Choose color for bar {i+1} (1-7): ")
-        
-        if choice == '1':
-            color = 'red'
-        elif choice == '2':
-            color = 'blue'
-        elif choice == '3':
-            color = 'yellow'
-        elif choice == '4':
-            color = 'green'
-        elif choice == '5':
-            color = 'purple'
-        elif choice == '6':
-            color = 'orange'
-        elif choice == '7':
-            color = 'pink'
-        else:
-            color = 'blue'
-        
+        color = get_menu_choice(
+            f"Choose color for bar {i+1}:",
+            color_options,
+            default_label="Blue",
+            default_value="blue"
+        )
         colors.append(color)
-    
     return colors
-
 
 def create_bar_graph(labels, values, width, colors):
     """Create and display bar graph"""
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(labels, values, width=width, color=colors, edgecolor='black')
+    plt.bar(labels, values, width=width, color=colors, edgecolor='black')
     plt.xlabel('Labels')
     plt.ylabel('Values')
     plt.title('Bar Graph')
@@ -222,7 +226,7 @@ def get_explode_values(num_slices):
     for i in range(num_slices):
         explode.append(0)
     
-    if explode_choice == 'yes':
+    if explode_choice in ('yes', 'y'):
         while True:
             try:
                 slice_num = int(input(f"Which slice to explode? (1-{num_slices}): "))
@@ -236,72 +240,40 @@ def get_explode_values(num_slices):
     
     return explode
 
-
 def get_pie_colors(num_slices):
-    """Get colors for pie chart slices"""
-    print("\nColor Options:")
-    print("1. Red")
-    print("2. Blue")
-    print("3. Yellow")
-    print("4. Green")
-    print("5. Purple")
-    print("6. Orange")
-    print("7. Pink")
+    """Get colors for each slice"""
+    color_options = [
+        ("Red", "red"),
+        ("Blue", "blue"),
+        ("Yellow", "yellow"),
+        ("Green", "green"),
+        ("Purple", "purple"),
+        ("Orange", "orange"),
+        ("Pink", "pink")
+    ]
     
     colors = []
     for i in range(num_slices):
-        choice = input(f"Choose color for slice {i+1} (1-7): ")
-        
-        if choice == '1':
-            color = 'red'
-        elif choice == '2':
-            color = 'blue'
-        elif choice == '3':
-            color = 'yellow'
-        elif choice == '4':
-            color = 'green'
-        elif choice == '5':
-            color = 'purple'
-        elif choice == '6':
-            color = 'orange'
-        elif choice == '7':
-            color = 'pink'
-        else:
-            color = 'blue'
-        
+        color = get_menu_choice(
+            f"Choose color for slice {i+1}:",
+            color_options,
+            default_label="Blue",
+            default_value="blue"
+        )
         colors.append(color)
-    
     return colors
-
 
 def get_hatch_pattern():
     """Get hatch pattern for pie chart"""
-    print("\nHatch Pattern Options:")
-    print("1. / (forward slash)")
-    print("2. \\ (backslash)")
-    print("3. | (vertical)")
-    print("4. - (horizontal)")
-    print("5. + (cross)")
-    print("6. None")
-    
-    choice = input("Choose hatch pattern (1-6): ")
-    
-    if choice == '1':
-        pattern = '/'
-    elif choice == '2':
-        pattern = '\\'
-    elif choice == '3':
-        pattern = '|'
-    elif choice == '4':
-        pattern = '-'
-    elif choice == '5':
-        pattern = '+'
-    elif choice == '6':
-        pattern = ''
-    else:
-        pattern = ''
-    
-    return pattern
+    options = [
+        ("/ (forward slash)", "/"),
+        ("\\ (backslash)", "\\"),
+        ("| (vertical)", "|"),
+        ("- (horizontal)", "-"),
+        ("+ (cross)", "+"),
+        ("None", "")
+    ]
+    return get_menu_choice("Hatch Pattern Options:", options, default_label="None", default_value="")
 
 
 def create_pie_chart(labels, values, explode, colors, hatch):
@@ -315,7 +287,7 @@ def create_pie_chart(labels, values, explode, colors, hatch):
         colors=colors,
         autopct='%1.1f%%',
         startangle=90,
-        shadow=True
+        shadow=False
     )
     
     # Apply hatch pattern to all wedges if selected
@@ -352,8 +324,9 @@ def handle_line_plot():
     labels, values = get_data_points()
     marker = get_line_marker()
     color = get_line_color()
+    markercolor = get_marker_color()
     linestyle = get_line_style()
-    create_line_plot(labels, values, marker, color, linestyle)
+    create_line_plot(labels, values, marker, color, markercolor, linestyle)
 
 
 def handle_bar_graph():
@@ -400,7 +373,6 @@ def main():
         
         else:
             print("\nInvalid choice! Please enter 1-4.")
-
 
 # ==================== PROGRAM ENTRY POINT ====================
 
